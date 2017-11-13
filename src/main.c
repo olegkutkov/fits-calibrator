@@ -24,9 +24,12 @@
 #include <string.h>
 #include <unistd.h>
 #include <signal.h>
+#include <stdarg.h>
 #include "version.h"
 #include "file_utils.h"
 #include "calibrator.h"
+
+static volatile int RUN_FLAG = 0;
 
 static struct option cmd_long_options[] =
 {
@@ -49,6 +52,21 @@ void show_help()
 	printf("\t-i, --input\t\tSet directory with non-calibrated FITS files\n");
 	printf("\t-o, --output\t\tSet directory for resulting calibrated FITS files\n");
 	printf("\t-d, --dark\t\tSet directory with darks files\n");
+}
+
+void logger_msg(char *fmt, ...)
+{
+	va_list args;
+
+	va_start(args, fmt);
+	vprintf(fmt, args);
+
+	va_end(args);
+}
+
+void interrupt_handler(int val)
+{
+	RUN_FLAG = 0;
 }
 
 int main(int argc, char **argv)
@@ -139,7 +157,20 @@ int main(int argc, char **argv)
 		strcpy(cparams.flatpath, flatdir);
 	}
 
+	RUN_FLAG = 1;
+	signal(SIGINT, interrupt_handler);
+
+	cparams.logger_msg = &logger_msg;
+
+	cparams.run_flag = 1;
+
 	calibrate_files(&cparams);
+
+	while (RUN_FLAG) {
+		sleep(1);
+	}
+
+	calibrator_stop(&cparams);
 
     return 0;
 }
