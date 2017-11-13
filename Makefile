@@ -23,9 +23,9 @@ PROGRAM = fits-calibrator
 DEBUG := -g -ggdb
 
 CFLAGS := -Wall -pipe -I./include -I/usr/include/cfitsio $(DEBUG)
-LDFLAG := -lcfitsio 
+LDFLAG := -lcfitsio -pthread
 
-SRC := src/main.c src/file_utils.c src/calibrator.c
+SRC := src/main.c src/file_utils.c src/calibrator.c src/list.c src/thread_pool.c
 
 $(PROGRAM): $(OBJECTS)
 	$(CC) $(CFLAGS) $(SRC) $(LDFLAG) -o $(PROGRAM)
