@@ -62,11 +62,9 @@ void build_full_file_path(const char *dir, const char *file, char **dst)
 	size_t fname_len = strlen(file);
 	*dst = (char *) malloc(dir_path_len + fname_len + 2);
 
-	strncpy(dst, dir, dir_path_len);
-	dst[dir_path_len] = '/';
-	strncpy(dst + dir_path_len + 1, file, fname_len);
-	dst[dir_path_len + fname_len + 1] = '\0';
-
-	return dst;
+	strncpy((*dst), dir, dir_path_len);
+	(*dst)[dir_path_len] = '/';
+	strncpy((*dst) + dir_path_len + 1, file, fname_len);
+	(*dst)[dir_path_len + fname_len + 1] = '\0';
 }
 
