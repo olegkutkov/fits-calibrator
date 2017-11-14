@@ -99,7 +99,7 @@ double fits_get_object_exptime(fits_handle_t *handle)
 	int status = 0;
 	float result;
 
-	fits_read_key(handle->src_fptr, TSTRING, "EXPTIME", &result, NULL, &status);
+	fits_read_key(handle->src_fptr, TFLOAT, "EXPTIME", &result, NULL, &status);
 
 	return result;
 }
