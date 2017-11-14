@@ -25,7 +25,7 @@ typedef struct node {
     struct node *next;
 } list_node_t;
 
-typedef void (*iterate_cb)(char*, void*);
+typedef void (*iterate_cb)(const char*, void*);
 
 list_node_t *add_object_to_list(list_node_t *list, char *object);
 void free_list(list_node_t *list);
