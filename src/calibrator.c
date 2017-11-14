@@ -30,6 +30,11 @@
 #include "fits_handler.h"
 #include "file_utils.h"
 
+#undef max
+#undef min
+#define min(a, b) ((a) < (b)) ? (a) : (b)
+#define max(a, b) ((a) > (b)) ? (a) : (b)
+
 static list_node_t *file_list = NULL;
 static int total_files_counter = 0;
 static char *USER_TIMEZONE = NULL;
@@ -46,7 +51,7 @@ int find_best_calibration_files(calibrator_params_t *params, time_t imtime, doub
 	return 0;
 }
 
-int substract_darks(calibrator_params_t *params, time_t imtime, double exptime)
+int substract_darks(calibrator_params_t *params, const char *src_file, time_t imtime, double exptime)
 {
 	char err_buf[32] = { 0 };
 	int status = 0;
@@ -54,6 +59,8 @@ int substract_darks(calibrator_params_t *params, time_t imtime, double exptime)
 	struct dirent *ep;
 	fits_handle_t *dark_image = NULL;
 	char *full_file_path = NULL;
+	double dark_exposure;
+	time_t dark_date, timediff_sec;
 
 	dp = opendir(params->darkpath);
 
@@ -65,7 +72,7 @@ int substract_darks(calibrator_params_t *params, time_t imtime, double exptime)
 		if (strstr(ep->d_name, "fit") || strstr(ep->d_name, "FIT")) {
 			build_full_file_path(params->darkpath, ep->d_name, &full_file_path);
 
-			printf("Working dark %s\n", full_file_path);
+//			printf("Working dark %s\n", full_file_path);
 
 			status = 0;
 
@@ -77,6 +84,21 @@ int substract_darks(calibrator_params_t *params, time_t imtime, double exptime)
 				free(full_file_path);
 
 				continue;
+			}
+
+			dark_date = fits_get_observation_dt(dark_image);
+			dark_exposure = fits_get_object_exptime(dark_image);
+
+			if (dark_date < imtime) {
+				timediff_sec = difftime(imtime, dark_date);
+
+				if (timediff_sec <= 900) {
+					printf("Timediff: %li sec  Light exp: %.4f   Dakr exp: %.4f\n", timediff_sec, exptime, dark_exposure);
+
+					if (exptime == dark_exposure) {
+						params->logger_msg("Found dark %s with eq exposure to %s\n", full_file_path, src_file);
+					}
+				}
 			}
 
 			fits_handler_free(dark_image);
@@ -114,11 +136,12 @@ void calibrate_one_file(const char *file, void *arg)
 	fits_get_object_name(fits_image, object);
 	image_exptime = fits_get_object_exptime(fits_image);
 
-//	params->logger_msg("Image time: %i\n", image_time);
-//	params->logger_msg("Image object: %s\n", object);
+	params->logger_msg("Object: %s\n", object);
+	params->logger_msg("Exposure: %f\n", image_exptime);
+	params->logger_msg("Image time: %i\n", image_time);
 
 	if (strlen(params->darkpath) > 0) {
-		substract_darks(params, image_time, image_exptime);
+		substract_darks(params, file, image_time, image_exptime);
 		//calib_image = find_best_calibration_file(params, image_time, object);
 	}
 
