@@ -25,7 +25,7 @@ int is_file_exist(char *filename);
 int remove_file(const char *filename);
 int is_regular_file(const char *path);
 
-char *build_full_file_path(const char *dir, const char *file);
+void build_full_file_path(const char *dir, const char *file, char **dst);
 
 #endif
 

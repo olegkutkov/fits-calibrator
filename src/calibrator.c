@@ -18,6 +18,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  
  */
 
+#include <limits.h>
 #include <stdlib.h>
 #include <dirent.h>
 #include <string.h>
@@ -39,26 +40,90 @@ typedef struct thread_arg {
 	int file_list_len;
 } thread_arg_t;
 
+int find_best_calibration_files(calibrator_params_t *params, time_t imtime, double exptime, const char *objname, fits_handle_t **cfiles)
+{
+	return 0;
+}
+
+int substract_darks(calibrator_params_t *params, time_t imtime, double exptime)
+{
+	char err_buf[32] = { 0 };
+	int status;
+//	DIR *dp;
+//	struct dirent *ep;
+//	fits_handle_t *dark_image = NULL;
+	char *full_file_path = NULL;
+
+//	dp = opendir(params->darkpath);
+
+//	if (dp == NULL) {
+//		return -1;
+//	}
+
+	build_full_file_path(params->darkpath, "test.fits", full_file_path);
+
+	printf("Working dark %s\n", full_file_path);
+
+	free(full_file_path);
+
+/*	while ((ep = readdir(dp))) {
+		if (strstr(ep->d_name, "fit") || strstr(ep->d_name, "FIT")) {
+			full_file_path = build_full_file_path(params->darkpath, ep->d_name);
+
+			printf("Working dark %s\n", full_file_path);
+
+			dark_image = fits_handler_new(full_file_path, &status);
+
+			if (status !=0 ) {
+				fits_get_status_code_msg(status, err_buf);
+				params->logger_msg("\nUnable to process %s error: %s\n", full_file_path, err_buf);
+				continue;
+			}
+
+			printf("Working dark %s\n", full_file_path);
+
+			fits_handler_free(dark_image);
+
+			free(full_file_path);
+
+		}
+	}
+*/
+
+	return 0;
+}
+
 void calibrate_one_file(const char *file, void *arg)
 {
 	char err_buf[32] = { 0 };
+	char object[76];
 	int status = 0;
 	time_t image_time;
+	double image_exptime;
+	fits_handle_t *fits_image;
 	calibrator_params_t *params = (calibrator_params_t *) arg;
 
 	params->logger_msg("\nWorking %s\n", file);
 
-	fits_handle_t *fits_image = fits_handler_new(file, &status);
+	fits_image = fits_handler_new(file, &status);
 
 	if (status != 0) {
-		get_status_code_msg(status, err_buf);
+		fits_get_status_code_msg(status, err_buf);
 		params->logger_msg("\nUnable to process %s error: %s\n", file, err_buf);
 		return;
 	}
 
 	image_time = fits_get_observation_dt(fits_image);
+	fits_get_object_name(fits_image, object);
+	image_exptime = fits_get_object_exptime(fits_image);
 
 	params->logger_msg("Image time: %i\n", image_time);
+	params->logger_msg("Image object: %s\n", object);
+
+	if (strlen(params->darkpath) > 0) {
+		substract_darks(params, image_time, image_exptime);
+		//calib_image = find_best_calibration_file(params, image_time, object);
+	}
 
 	fits_handler_free(fits_image);
 }
@@ -104,15 +169,7 @@ void calibrate_files(calibrator_params_t *params)
 
 	while ((ep = readdir(dp))) {
 		if (strstr(ep->d_name, "fit") || strstr(ep->d_name, "FIT")) {
-
-			inpath_len = strlen(params->inpath);
-			fname_len = strlen(ep->d_name);
-			full_path = (char *) malloc(inpath_len + fname_len + 2);
-
-			strncpy(full_path, params->inpath, inpath_len);
-			full_path[inpath_len] = '/';
-			strncpy(full_path + inpath_len + 1, ep->d_name, fname_len);
-			full_path[inpath_len + fname_len + 1] = '\0';
+			build_full_file_path(params->inpath, ep->d_name, &full_path);
 
 			file_list = add_object_to_list(file_list, full_path);
 
