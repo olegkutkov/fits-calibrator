@@ -40,30 +40,49 @@ fits_handle_t *fits_handler_new(const char *filepath, int *status)
 
 time_t fits_get_observation_dt(fits_handle_t *handle)
 {
-	int status = 0, nkeys;
-	char comment[FLEN_COMMENT];
-	char card[FLEN_CARD] = { 0 };
+	int status = 0;
+	char date[FLEN_CARD] = { 0 };
+	size_t date_len;
+	int year = 0, month = 1, day = 0, hour = 0, minute = 0;
+	double second = 0;
 	struct tm timeval;
 
-	fits_get_hdrspace(handle->src_fptr, &nkeys, NULL, &status);
+	fits_read_key(handle->src_fptr, TSTRING, "DATE-OBS", date, NULL, &status);
 
-	fits_read_key(handle->src_fptr, TSTRING, "DATE-OBS", card, comment, &status);
-
-	if (strstr(card, "T") == NULL) {
-		card[strlen(card)] = 'T';
-		fits_read_key(handle->src_fptr, TSTRING, "TIME-OBS", card + strlen(card), comment, &status);
+	if (status != 0) {
+		return 0;
 	}
 
-	printf("%s\n", card);
+	if (strstr(date, "T") == NULL) {
+		date_len = strlen(date);
+		date[date_len] = 'T';
+		fits_read_key(handle->src_fptr, TSTRING, "TIME-OBS", date + date_len + 1, NULL, &status);
 
-	fits_str2time(card, &timeval.tm_year, &timeval.tm_mon, &timeval.tm_mday, 
-					&timeval.tm_hour, &timeval.tm_min, (double *)&timeval.tm_sec, &status);
+		if (status != 0) {
+			date[date_len] = '\0';
+			status = 0;
+		}
+	}
 
-//	timeval.tm_year = year;
+	fits_str2time(date, &year, &month, &day, &hour, &minute, &second, &status);
 
-//	printf("y: %i  m: %i d: %i  h: %i  min: %i  sec: %f\n", year, month, day, hour, minute, second);
+	timeval.tm_year = year - 1900;
+	timeval.tm_mon = month - 1;
+	timeval.tm_mday = day;
+	timeval.tm_hour = hour;
+	timeval.tm_min = minute;
+	timeval.tm_sec = (int) second;
 
 	return mktime(&timeval);
+}
+
+int fits_get_object_name(fits_handle_t *handle, char *buf)
+{
+	int status = 0;
+
+	fits_read_key(handle->src_fptr, TSTRING, "OBJECT", buf, NULL, &status);
+
+	return status;
 }
 
 int fits_substract_dark(fits_handle_t *image, fits_handle_t *dark)
