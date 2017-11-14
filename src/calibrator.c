@@ -28,6 +28,7 @@
 #include "thread_pool.h"
 #include "calibrator.h"
 #include "fits_handler.h"
+#include "file_utils.h"
 
 static list_node_t *file_list = NULL;
 static int total_files_counter = 0;
@@ -48,47 +49,43 @@ int find_best_calibration_files(calibrator_params_t *params, time_t imtime, doub
 int substract_darks(calibrator_params_t *params, time_t imtime, double exptime)
 {
 	char err_buf[32] = { 0 };
-	int status;
-//	DIR *dp;
-//	struct dirent *ep;
-//	fits_handle_t *dark_image = NULL;
+	int status = 0;
+	DIR *dp;
+	struct dirent *ep;
+	fits_handle_t *dark_image = NULL;
 	char *full_file_path = NULL;
 
-//	dp = opendir(params->darkpath);
+	dp = opendir(params->darkpath);
 
-//	if (dp == NULL) {
-//		return -1;
-//	}
+	if (dp == NULL) {
+		return -1;
+	}
 
-	build_full_file_path(params->darkpath, "test.fits", full_file_path);
-
-	printf("Working dark %s\n", full_file_path);
-
-	free(full_file_path);
-
-/*	while ((ep = readdir(dp))) {
+	while ((ep = readdir(dp))) {
 		if (strstr(ep->d_name, "fit") || strstr(ep->d_name, "FIT")) {
-			full_file_path = build_full_file_path(params->darkpath, ep->d_name);
+			build_full_file_path(params->darkpath, ep->d_name, &full_file_path);
 
 			printf("Working dark %s\n", full_file_path);
+
+			status = 0;
 
 			dark_image = fits_handler_new(full_file_path, &status);
 
 			if (status !=0 ) {
 				fits_get_status_code_msg(status, err_buf);
 				params->logger_msg("\nUnable to process %s error: %s\n", full_file_path, err_buf);
+				free(full_file_path);
+
 				continue;
 			}
-
-			printf("Working dark %s\n", full_file_path);
 
 			fits_handler_free(dark_image);
 
 			free(full_file_path);
-
 		}
 	}
-*/
+
+	closedir (dp);
 
 	return 0;
 }
@@ -117,8 +114,8 @@ void calibrate_one_file(const char *file, void *arg)
 	fits_get_object_name(fits_image, object);
 	image_exptime = fits_get_object_exptime(fits_image);
 
-	params->logger_msg("Image time: %i\n", image_time);
-	params->logger_msg("Image object: %s\n", object);
+//	params->logger_msg("Image time: %i\n", image_time);
+//	params->logger_msg("Image object: %s\n", object);
 
 	if (strlen(params->darkpath) > 0) {
 		substract_darks(params, image_time, image_exptime);
@@ -151,8 +148,6 @@ void calibrate_files(calibrator_params_t *params)
 	int file_count = 0;
 	DIR *dp;
 	struct dirent *ep;
-	size_t inpath_len;
-	size_t fname_len;
 	char *full_path = NULL;
 	long int cpucnt;
 	int files_per_cpu_int, left_files, i;
