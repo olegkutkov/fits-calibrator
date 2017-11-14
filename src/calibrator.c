@@ -25,6 +25,7 @@
 #include "list.h"
 #include "thread_pool.h"
 #include "calibrator.h"
+#include "fits_handler.h"
 
 static list_node_t *file_list = NULL;
 static int total_files_counter = 0;
@@ -36,14 +37,28 @@ typedef struct thread_arg {
 	int file_list_len;
 } thread_arg_t;
 
-void calibrate_one_file(char *file, void *arg)
+void calibrate_one_file(const char *file, void *arg)
 {
+	char err_buf[32] = { 0 };
+	int status = 0;
+	time_t image_time;
 	calibrator_params_t *params = (calibrator_params_t *) arg;
 
 	params->logger_msg("\nWorking %s\n", file);
 
+	fits_handle_t *fits_image = fits_handler_new(file, &status);
 
-	
+	if (status != 0) {
+		get_status_code_msg(status, err_buf);
+		params->logger_msg("\nUnable to process %s error: %s\n", file, err_buf);
+		return;
+	}
+
+	image_time = fits_get_observation_dt(fits_image);
+
+	params->logger_msg("Image time: %i\n", image_time);
+
+	fits_handler_free(fits_image);
 }
 
 void *thread_func(void *arg)
