@@ -38,6 +38,15 @@ fits_handle_t *fits_handler_new(const char *filepath, int *status)
 	return hdl;
 }
 
+int fits_load_image(fits_handle_t *handle)
+{
+	return 0;
+}
+
+void fits_free_image(fits_handle_t *handle)
+{
+}
+
 time_t fits_get_observation_dt(fits_handle_t *handle)
 {
 	int status = 0;
@@ -85,6 +94,16 @@ int fits_get_object_name(fits_handle_t *handle, char *buf)
 	return status;
 }
 
+double fits_get_object_exptime(fits_handle_t *handle)
+{
+	int status = 0;
+	float result;
+
+	fits_read_key(handle->src_fptr, TSTRING, "EXPTIME", &result, NULL, &status);
+
+	return result;
+}
+
 int fits_substract_dark(fits_handle_t *image, fits_handle_t *dark)
 {
 	return 0;
@@ -93,6 +112,11 @@ int fits_substract_dark(fits_handle_t *image, fits_handle_t *dark)
 int fits_substract_bias(fits_handle_t *image, fits_handle_t *bias)
 {
 	return fits_substract_dark(image, bias);
+}
+
+int fits_save_as_new_file(fits_handle_t *handle, const char *filepath)
+{
+	return 0;
 }
 
 void fits_handler_free(fits_handle_t *handle)
@@ -108,7 +132,7 @@ void fits_handler_free(fits_handle_t *handle)
 	}
 }
 
-void get_status_code_msg(int status, char *buf)
+void fits_get_status_code_msg(int status, char *buf)
 {
 	if (status < 0) {
 		buf = strerror(errno);
