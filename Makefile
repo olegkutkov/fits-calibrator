@@ -25,7 +25,8 @@ DEBUG := -g -ggdb
 CFLAGS := -Wall -pipe -I./include -I/usr/include/cfitsio $(DEBUG)
 LDFLAG := -lcfitsio -pthread
 
-SRC := src/main.c src/file_utils.c src/calibrator.c src/list.c src/thread_pool.c
+SRC := src/main.c src/file_utils.c src/calibrator.c src/list.c \
+		src/thread_pool.c src/fits_handler.c
 
 $(PROGRAM): $(OBJECTS)
 	$(CC) $(CFLAGS) $(SRC) $(LDFLAG) -o $(PROGRAM)
