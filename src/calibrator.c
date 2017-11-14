@@ -22,6 +22,7 @@
 #include <dirent.h>
 #include <string.h>
 #include <unistd.h>
+#include <time.h>
 #include "list.h"
 #include "thread_pool.h"
 #include "calibrator.h"
@@ -29,6 +30,7 @@
 
 static list_node_t *file_list = NULL;
 static int total_files_counter = 0;
+static char *USER_TIMEZONE = NULL;
 
 typedef struct thread_arg {
 	calibrator_params_t *cal_param;
@@ -131,7 +133,18 @@ void calibrate_files(calibrator_params_t *params)
 
 	cpucnt = sysconf(_SC_NPROCESSORS_ONLN);
 
-	params->logger_msg("\nStarting conveter on %li processor cores...\n", cpucnt);
+	params->logger_msg("\nStarting calibrator on %li processor cores...\n", cpucnt);
+
+
+	USER_TIMEZONE = getenv("TZ");
+
+	if (USER_TIMEZONE) {
+		USER_TIMEZONE = strdup(USER_TIMEZONE);
+	}
+
+	setenv("TZ", "", 1);
+	tzset();
+
 
 	if (cpucnt > file_count) {
 		files_per_cpu_int = 1;
@@ -177,5 +190,15 @@ void calibrator_stop(calibrator_params_t *params)
 		free_list(file_list);
 		file_list = NULL;
 	}
+
+	if (USER_TIMEZONE) {
+		setenv("TZ", USER_TIMEZONE, 1);
+		free(USER_TIMEZONE);
+		USER_TIMEZONE = NULL;
+	} else {
+		unsetenv("TZ");
+	}
+
+	tzset();
 }
 
