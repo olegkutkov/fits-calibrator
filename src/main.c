@@ -87,7 +87,7 @@ int main(int argc, char **argv)
 		 *darkdir = NULL, *biasdir = NULL, *flatdir = NULL;
 
 	long int timediff_max = 86400;
-	double expdiff_max = 35;
+	double expdiff_min = 65;
 	int calfiles_min = 2, calfiles_max = 17, jobs_count = 1;
 
 	while (1) {
@@ -129,7 +129,7 @@ int main(int argc, char **argv)
 				break;
 
 			case 'e':
-				expdiff_max = atof(optarg);
+				expdiff_min = atof(optarg);
 				break;
 
 			case 'n':
@@ -200,7 +200,7 @@ int main(int argc, char **argv)
 	cparams.min_calfiles = calfiles_min;
 	cparams.max_calfiles = calfiles_max;
 	cparams.max_timediff = timediff_max;
-	cparams.min_exp_eq_percent = expdiff_max;
+	cparams.min_exp_eq_percent = expdiff_min;
 
 	cparams.jobs_count = jobs_count;
 
