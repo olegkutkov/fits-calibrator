@@ -139,7 +139,6 @@ int substract_darks(calibrator_params_t *params, const char *src_file, time_t im
 
 					fits_free_image(curr_dark);
 
-
 					dark_counter++;
 				}
 			}
@@ -161,6 +160,8 @@ int substract_darks(calibrator_params_t *params, const char *src_file, time_t im
 	}
 
 	fits_divide_image_matrix(master_dark, dark_counter);
+
+	fits_free_image(master_dark);
 
 	if (master_dark) {
 		free(master_dark);
