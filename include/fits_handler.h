@@ -38,7 +38,9 @@ time_t fits_get_observation_dt(fits_handle_t *handle);
 int fits_get_object_name(fits_handle_t *handle, char *buf);
 double fits_get_object_exptime(fits_handle_t *handle);
 
+int fits_create_image_mem(fits_handle_t *handle, int width, int height);
 int fits_load_image(fits_handle_t *handle);
+int fits_copy_image(fits_handle_t *handle, fits_handle_t *src);
 void fits_free_image(fits_handle_t *handle);
 
 int fits_substract_dark(fits_handle_t *image, fits_handle_t *dark);
@@ -46,6 +48,7 @@ int fits_substract_bias(fits_handle_t *image, fits_handle_t *bias);
 
 int fits_save_as_new_file(fits_handle_t *image, const char *filepath);
 
+void fits_release_file(fits_handle_t *handle);
 void fits_handler_free(fits_handle_t *handle);
 
 void fits_get_status_code_msg(int status, char *buf);

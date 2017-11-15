@@ -74,11 +74,45 @@ int fits_copy_image(fits_handle_t *handle, fits_handle_t *src)
 	}
 
 	memcpy(handle->image, src->image, src->width * src->height);
+
+	return 0;
+}
+
+int fits_get_image_size(fits_handle_t *handle)
+{
+	int status = 0;
+	long anaxes[2] = { 1, 1 };
+
+	fits_get_img_size(handle->src_fptr, 2, anaxes, &status);
+
+	handle->width = anaxes[0];
+	handle->height = anaxes[1];
+
+	return status;
+}
+
+int fits_get_image_w(fits_handle_t *handle)
+{
+	return handle->width;
+}
+
+int fits_get_image_h(fits_handle_t *handle)
+{
+	return handle->height;
 }
 
 int fits_load_image(fits_handle_t *handle)
 {
-	return 0;
+	int status = 0;
+	long firstpix[2] = { 1, 1 };
+	long npixels = handle->width * handle->height;
+
+	fits_get_image_size(handle);
+
+	fits_read_pix(handle->src_fptr, TDOUBLE, firstpix,
+					npixels, NULL, handle->image, NULL, &status);
+
+	return status;
 }
 
 void fits_free_image(fits_handle_t *handle)
@@ -100,6 +134,8 @@ time_t fits_get_observation_dt(fits_handle_t *handle)
 	int year = 0, month = 1, day = 0, hour = 0, minute = 0;
 	double second = 0;
 	struct tm timeval;
+
+	memset(&timeval, 0, sizeof(struct tm));
 
 	fits_read_key(handle->src_fptr, TSTRING, "DATE-OBS", date, NULL, &status);
 
@@ -164,16 +200,24 @@ int fits_save_as_new_file(fits_handle_t *handle, const char *filepath)
 	return 0;
 }
 
-void fits_handler_free(fits_handle_t *handle)
+void fits_release_file(fits_handle_t *handle)
 {
 	int status = 0;
 
+	fits_close_file(handle->src_fptr, &status);
+
+	handle->src_fptr = NULL;
+}
+
+void fits_handler_free(fits_handle_t *handle)
+{
 	if (handle) {
 		if (handle->src_fptr) {
-			fits_close_file(handle->src_fptr, &status);
+			fits_release_file(handle);
 		}
 
 		free(handle);
+		handle = NULL;
 	}
 }
 
