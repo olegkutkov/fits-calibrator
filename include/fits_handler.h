@@ -41,7 +41,12 @@ double fits_get_object_exptime(fits_handle_t *handle);
 int fits_create_image_mem(fits_handle_t *handle, int width, int height);
 int fits_load_image(fits_handle_t *handle);
 int fits_copy_image(fits_handle_t *handle, fits_handle_t *src);
+int fits_add_image_matrix(fits_handle_t *handle, fits_handle_t *src);
+int fits_divide_image_matrix(fits_handle_t *handle, int divider);
 void fits_free_image(fits_handle_t *handle);
+
+int fits_get_image_w(fits_handle_t *handle);
+int fits_get_image_h(fits_handle_t *handle);
 
 int fits_substract_dark(fits_handle_t *image, fits_handle_t *dark);
 int fits_substract_bias(fits_handle_t *image, fits_handle_t *bias);

@@ -51,7 +51,7 @@ fits_handle_t *fits_handler_new(const char *filepath, int *status)
 
 int fits_create_image_mem(fits_handle_t *handle, int width, int height)
 {
-	handle->image = (double*) malloc(width * height);
+	handle->image = (double*) malloc(width * height * sizeof(double));
 
 	if (!handle->image) {
 		return -errno;
@@ -73,7 +73,49 @@ int fits_copy_image(fits_handle_t *handle, fits_handle_t *src)
 		return -ENOMEM;
 	}
 
-	memcpy(handle->image, src->image, src->width * src->height);
+	memcpy(handle->image, src->image, src->width * src->height * sizeof(double));
+
+	return 0;
+}
+
+int fits_add_image_matrix(fits_handle_t *handle, fits_handle_t *src)
+{
+	long i;
+
+	if (!handle || !src || !src->image) {
+		return -EFAULT;
+	}
+
+	if (!handle->image) {
+		return -ENOMEM;
+	}
+
+	if (handle->width != src->width || handle->height != src->height) {
+		return -EFAULT;
+	}
+
+	for (i = 0; i < handle->width * handle->height; ++i) {
+		handle->image[i] += src->image[i];
+	}
+
+	return 0;
+}
+
+int fits_divide_image_matrix(fits_handle_t *handle, int divider)
+{
+	long i;
+
+	if (!handle) {
+		return -EFAULT;
+	}
+
+	if (!handle->image) {
+		return -ENOMEM;
+	}
+
+	for (i = 0; i < handle->width * handle->height; ++i) {
+		handle->image[i] = handle->image[i] / (long)divider;
+	}
 
 	return 0;
 }
