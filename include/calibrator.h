@@ -21,6 +21,7 @@
 #define __CALIBRATOR_H__
 
 typedef void (*logger_msg_cb) (char*, ...);
+typedef void (*done_cb) (void);
 
 typedef struct calibrator_params {
 	char inpath[256];
@@ -29,12 +30,14 @@ typedef struct calibrator_params {
 	char biaspath[256];
 	char flatpath[256];
 	char run_flag;
-	logger_msg_cb logger_msg;
 	int jobs_count;
 	int min_calfiles;
 	int max_calfiles;
 	long int max_timediff;
 	double min_exp_eq_percent;
+
+	logger_msg_cb logger_msg;
+	done_cb complete;
 } calibrator_params_t;
 
 void calibrate_files(calibrator_params_t *params);
