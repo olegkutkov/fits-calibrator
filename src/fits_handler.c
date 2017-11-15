@@ -22,7 +22,7 @@
 #include <errno.h>
 #include "fits_handler.h"
 
-fits_handle_t *fits_handler_new(const char *filepath, int *status)
+fits_handle_t *fits_handler_mem_new(int *status)
 {
 	fits_handle_t *hdl = (fits_handle_t *) malloc(sizeof(fits_handle_t));
 
@@ -33,9 +33,47 @@ fits_handle_t *fits_handler_new(const char *filepath, int *status)
 
 	memset(hdl, 0, sizeof(fits_handle_t));
 
+	return hdl;
+}
+
+fits_handle_t *fits_handler_new(const char *filepath, int *status)
+{
+	fits_handle_t *hdl = fits_handler_mem_new(status);
+
+	if (!hdl) {
+		return NULL;
+	}
+
 	fits_open_file(&hdl->src_fptr, filepath, READONLY, status);
 
 	return hdl;
+}
+
+int fits_create_image_mem(fits_handle_t *handle, int width, int height)
+{
+	handle->image = (double*) malloc(width * height);
+
+	if (!handle->image) {
+		return -errno;
+	}
+
+	handle->width = width;
+	handle->height = height;
+
+	return 0;
+}
+
+int fits_copy_image(fits_handle_t *handle, fits_handle_t *src)
+{
+	if (!handle || !src || !src->image) {
+		return -EFAULT;
+	}
+
+	if (!handle->image) {
+		return -ENOMEM;
+	}
+
+	memcpy(handle->image, src->image, src->width * src->height);
 }
 
 int fits_load_image(fits_handle_t *handle)
@@ -45,6 +83,13 @@ int fits_load_image(fits_handle_t *handle)
 
 void fits_free_image(fits_handle_t *handle)
 {
+	if (!handle) {
+		return;
+	}
+
+	if (handle->image) {
+		free(handle->image);
+	}
 }
 
 time_t fits_get_observation_dt(fits_handle_t *handle)
