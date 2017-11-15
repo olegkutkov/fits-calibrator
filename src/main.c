@@ -79,6 +79,11 @@ void interrupt_handler(int val)
 	RUN_FLAG = 0;
 }
 
+void calibration_done(void)
+{
+	RUN_FLAG = 0;
+}
+
 int main(int argc, char **argv)
 {
 	int c;
@@ -196,6 +201,7 @@ int main(int argc, char **argv)
 	signal(SIGINT, interrupt_handler);
 
 	cparams.logger_msg = &logger_msg;
+	cparams.complete = &calibration_done;
 
 	cparams.min_calfiles = calfiles_min;
 	cparams.max_calfiles = calfiles_max;
