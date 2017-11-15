@@ -51,22 +51,41 @@ int find_best_calibration_files(calibrator_params_t *params, time_t imtime, doub
 	return 0;
 }
 
+void free_darks_list(fits_handle_t **list, int cnt)
+{
+	int i = 0;
+
+	for (; i < cnt; ++i) {
+		fits_handler_free(list[i]);
+	}
+
+	free(list);
+}
+
+void build_master_dark(fits_handle_t **list, int cnt)
+{
+	
+}
+
 int substract_darks(calibrator_params_t *params, const char *src_file, time_t imtime, double exptime)
 {
 	char err_buf[32] = { 0 };
 	int status = 0, dark_counter = 0;
 	DIR *dp;
 	struct dirent *ep;
-	fits_handle_t *dark_image = NULL;
 	char *full_file_path = NULL;
 	double dark_exposure, exp_diff, min_exp, max_exp;
 	time_t dark_date, timediff_sec, min_time, max_time;
+	fits_handle_t **dark_images = NULL;
+	fits_handle_t *curr_dark;
 
 	dp = opendir(params->darkpath);
 
 	if (dp == NULL) {
 		return -1;
 	}
+
+	dark_images = (fits_handle_t **) malloc (sizeof(fits_handle_t *) * params->max_calfiles + 1);
 
 	while ((ep = readdir(dp))) {
 		if (dark_counter >= params->max_calfiles) {
@@ -78,7 +97,7 @@ int substract_darks(calibrator_params_t *params, const char *src_file, time_t im
 
 			status = 0;
 
-			dark_image = fits_handler_new(full_file_path, &status);
+			curr_dark = fits_handler_new(full_file_path, &status);
 
 			if (status !=0 ) {
 				fits_get_status_code_msg(status, err_buf);
@@ -88,8 +107,8 @@ int substract_darks(calibrator_params_t *params, const char *src_file, time_t im
 				continue;
 			}
 
-			dark_date = fits_get_observation_dt(dark_image);
-			dark_exposure = fits_get_object_exptime(dark_image);
+			dark_date = fits_get_observation_dt(curr_dark);
+			dark_exposure = fits_get_object_exptime(curr_dark);
 
 			min_time = min(dark_date, imtime);
 			max_time = max(dark_date, imtime);
@@ -106,11 +125,13 @@ int substract_darks(calibrator_params_t *params, const char *src_file, time_t im
 					params->logger_msg("\t!!! Found corresponding dark %s to file %s, timediff: %li sec, expdiff %.2f %%\n",
 										full_file_path, src_file, timediff_sec, exp_diff);
 
+					dark_images[dark_counter] = curr_dark;
+
 					dark_counter++;
 				}
+			} else {
+				fits_handler_free(curr_dark);
 			}
-
-			fits_handler_free(dark_image);
 
 			free(full_file_path);
 		}
@@ -119,8 +140,11 @@ int substract_darks(calibrator_params_t *params, const char *src_file, time_t im
 	closedir (dp);
 
 	if (dark_counter < params->min_calfiles) {
+		free_darks_list(dark_images, dark_counter);
 		return -1;
 	}
+
+	free_darks_list(dark_images, dark_counter);
 
 	return 0;
 }
