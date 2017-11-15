@@ -120,7 +120,7 @@ int substract_darks(calibrator_params_t *params, const char *src_file, time_t im
 				exp_diff = (min_exp / max_exp) * 100;
 
 				if (exp_diff >= params->min_exp_eq_percent) {
-					params->logger_msg("\t!!! Found corresponding dark %s to file %s, timediff: %li sec, expdiff %.2f %%\n",
+					params->logger_msg("\tFound corresponding dark %s to file %s, timediff: %li sec, expdiff %.2f %%\n",
 											full_file_path, src_file, timediff_sec, exp_diff);
 
 					fits_load_image(curr_dark);
@@ -155,6 +155,8 @@ int substract_darks(calibrator_params_t *params, const char *src_file, time_t im
 		if (master_dark) {
 			free(master_dark);
 		}
+
+		params->logger_msg("!!! To few (%i) dark files for the %s skipping calibration...\n", dark_counter, src_file);
 
 		return -1;
 	}
@@ -194,9 +196,9 @@ void calibrate_one_file(const char *file, void *arg)
 	fits_get_object_name(fits_image, object);
 	image_exptime = fits_get_object_exptime(fits_image);
 
-	params->logger_msg("Object: %s\n", object);
-	params->logger_msg("Exposure: %f\n", image_exptime);
-	params->logger_msg("Image time: %i\n", image_time);
+//	params->logger_msg("Object: %s\n", object);
+//	params->logger_msg("Exposure: %f\n", image_exptime);
+//	params->logger_msg("Image time: %i\n", image_time);
 
 	if (strlen(params->darkpath) > 0) {
 		substract_darks(params, file, image_time, image_exptime);
