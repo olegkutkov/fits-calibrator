@@ -54,13 +54,13 @@ int find_best_calibration_files(calibrator_params_t *params, time_t imtime, doub
 int substract_darks(calibrator_params_t *params, const char *src_file, time_t imtime, double exptime)
 {
 	char err_buf[32] = { 0 };
-	int status = 0;
+	int status = 0, dark_counter = 0;
 	DIR *dp;
 	struct dirent *ep;
 	fits_handle_t *dark_image = NULL;
 	char *full_file_path = NULL;
-	double dark_exposure;
-	time_t dark_date, timediff_sec;
+	double dark_exposure, exp_diff, min_exp, max_exp;
+	time_t dark_date, timediff_sec, min_time, max_time;
 
 	dp = opendir(params->darkpath);
 
@@ -69,10 +69,12 @@ int substract_darks(calibrator_params_t *params, const char *src_file, time_t im
 	}
 
 	while ((ep = readdir(dp))) {
+		if (dark_counter >= params->max_calfiles) {
+			break;
+		}
+
 		if (strstr(ep->d_name, "fit") || strstr(ep->d_name, "FIT")) {
 			build_full_file_path(params->darkpath, ep->d_name, &full_file_path);
-
-//			printf("Working dark %s\n", full_file_path);
 
 			status = 0;
 
@@ -89,15 +91,22 @@ int substract_darks(calibrator_params_t *params, const char *src_file, time_t im
 			dark_date = fits_get_observation_dt(dark_image);
 			dark_exposure = fits_get_object_exptime(dark_image);
 
-			if (dark_date < imtime) {
-				timediff_sec = difftime(imtime, dark_date);
+			min_time = min(dark_date, imtime);
+			max_time = max(dark_date, imtime);
 
-				if (timediff_sec <= 900) {
-					printf("Timediff: %li sec  Light exp: %.4f   Dakr exp: %.4f\n", timediff_sec, exptime, dark_exposure);
+			timediff_sec = difftime(max_time, min_time);
 
-					if (exptime == dark_exposure) {
-						params->logger_msg("Found dark %s with eq exposure to %s\n", full_file_path, src_file);
-					}
+			if (timediff_sec <= params->max_timediff) {
+				min_exp = min(exptime, dark_exposure);
+				max_exp = max(exptime, dark_exposure);
+
+				exp_diff = (min_exp / max_exp) * 100;
+
+				if (exp_diff >= params->min_exp_eq_percent) {
+					params->logger_msg("\t!!! Found corresponding dark %s to file %s, timediff: %li sec, expdiff %.2f %%\n",
+										full_file_path, src_file, timediff_sec, exp_diff);
+
+					dark_counter++;
 				}
 			}
 
@@ -108,6 +117,10 @@ int substract_darks(calibrator_params_t *params, const char *src_file, time_t im
 	}
 
 	closedir (dp);
+
+	if (dark_counter < params->min_calfiles) {
+		return -1;
+	}
 
 	return 0;
 }
@@ -206,7 +219,7 @@ void calibrate_files(calibrator_params_t *params)
 		return;
 	}
 
-	cpucnt = sysconf(_SC_NPROCESSORS_ONLN);
+	cpucnt = sysconf(_SC_NPROCESSORS_ONLN) * params->jobs_count;
 
 	params->logger_msg("\nStarting calibrator on %li processor cores...\n", cpucnt);
 
