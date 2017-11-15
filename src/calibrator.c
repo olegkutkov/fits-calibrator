@@ -219,10 +219,11 @@ void calibrate_files(calibrator_params_t *params)
 		return;
 	}
 
-	cpucnt = sysconf(_SC_NPROCESSORS_ONLN) * params->jobs_count;
+	cpucnt = sysconf(_SC_NPROCESSORS_ONLN);
 
-	params->logger_msg("\nStarting calibrator on %li processor cores...\n", cpucnt);
+	params->logger_msg("\nStarting calibrator on %li processor cores with %i tasks by core...\n", cpucnt, cpucnt * params->jobs_count);
 
+	cpucnt *= params->jobs_count;
 
 	USER_TIMEZONE = getenv("TZ");
 
