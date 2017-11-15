@@ -221,7 +221,7 @@ void calibrate_files(calibrator_params_t *params)
 
 	cpucnt = sysconf(_SC_NPROCESSORS_ONLN);
 
-	params->logger_msg("\nStarting calibrator on %li processor cores with %i tasks by core...\n", cpucnt, cpucnt * params->jobs_count);
+	params->logger_msg("\nStarting calibrator on %li processor cores with %i tasks by core...\n", cpucnt, params->jobs_count);
 
 	cpucnt *= params->jobs_count;
 
