@@ -147,9 +147,17 @@ int fits_load_image(fits_handle_t *handle)
 {
 	int status = 0;
 	long firstpix[2] = { 1, 1 };
-	long npixels = handle->width * handle->height;
+	long npixels;
 
 	fits_get_image_size(handle);
+
+	npixels = handle->width * handle->height;
+
+	handle->image = (double*) malloc(npixels * sizeof(double));
+
+	if (!handle->image) {
+		return -errno;
+	}
 
 	fits_read_pix(handle->src_fptr, TDOUBLE, firstpix,
 					npixels, NULL, handle->image, NULL, &status);
