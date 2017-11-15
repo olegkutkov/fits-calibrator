@@ -39,6 +39,11 @@ static struct option cmd_long_options[] =
 	{"dark",  required_argument, 0, 'd'},
 	{"bias", required_argument, 0, 'b'},
 	{"flat", required_argument, 0, 'f'},
+	{"time-diff", required_argument, 0, 't'},
+	{"exp-diff", required_argument, 0, 'e'},
+	{"min-calfiles", required_argument, 0, 'n'},
+	{"max-calfiles", required_argument, 0, 'm'},
+	{"jobs", required_argument, 0, 'j'},
 	{0, 0, 0, 0}
 };
 
@@ -52,6 +57,11 @@ void show_help()
 	printf("\t-i, --input\t\tSet directory with non-calibrated FITS files\n");
 	printf("\t-o, --output\t\tSet directory for resulting calibrated FITS files\n");
 	printf("\t-d, --dark\t\tSet directory with darks files\n");
+	printf("\t-t, --time-diff\t\tSet max time diff between image and calibration file is seconds (default is 86400)\n");
+	printf("\t-e, --exp-diff\t\tSet min exposure equality between image and calibration file in percenst (default is 35)\n");
+	printf("\t-n, --min-calfiles\tSet minumum requred num of calibration files to process image (default is 2)\n");
+	printf("\t-m, --max-calfiles\tSet maximum requred num of calibration files to process image (default is 17)\n");
+	printf("\t-j, --jobs\t\tSet threads count per CPU\n");
 }
 
 void logger_msg(char *fmt, ...)
@@ -74,7 +84,11 @@ int main(int argc, char **argv)
 	int c;
 	calibrator_params_t cparams;
 	char *indir = NULL, *outdir = NULL,
-		 *darkdir = NULL, *biasdir = NULL, *flatdir = NULL;;
+		 *darkdir = NULL, *biasdir = NULL, *flatdir = NULL;
+
+	long int timediff_max = 86400;
+	double expdiff_max = 35;
+	int calfiles_min = 2, calfiles_max = 17, jobs_count = 1;
 
 	while (1) {
 		int option_index = 0;
@@ -108,6 +122,27 @@ int main(int argc, char **argv)
 
 			case 'f':
 				flatdir = optarg;
+				break;
+
+			case 't':
+				timediff_max = atol(optarg);
+				break;
+
+			case 'e':
+				expdiff_max = atof(optarg);
+				break;
+
+			case 'n':
+				calfiles_min = atoi(optarg);
+				break;
+
+			case 'm':
+				calfiles_max = atoi(optarg);
+				break;
+
+			case 'j':
+				jobs_count = atoi(optarg);
+				break;
 
 			case '?':
 				show_help();
@@ -161,6 +196,13 @@ int main(int argc, char **argv)
 	signal(SIGINT, interrupt_handler);
 
 	cparams.logger_msg = &logger_msg;
+
+	cparams.min_calfiles = calfiles_min;
+	cparams.max_calfiles = calfiles_max;
+	cparams.max_timediff = timediff_max;
+	cparams.min_exp_eq_percent = expdiff_max;
+
+	cparams.jobs_count = jobs_count;
 
 	cparams.run_flag = 1;
 

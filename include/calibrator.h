@@ -30,6 +30,11 @@ typedef struct calibrator_params {
 	char flatpath[256];
 	char run_flag;
 	logger_msg_cb logger_msg;
+	int jobs_count;
+	int min_calfiles;
+	int max_calfiles;
+	long int max_timediff;
+	double min_exp_eq_percent;
 } calibrator_params_t;
 
 void calibrate_files(calibrator_params_t *params);
