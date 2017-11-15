@@ -93,7 +93,7 @@ int main(int argc, char **argv)
 	while (1) {
 		int option_index = 0;
 
-		c = getopt_long(argc, argv, "hi:o:d:b:f:", cmd_long_options, &option_index);
+		c = getopt_long(argc, argv, "hi:o:d:b:f:t:e:n:m:j:", cmd_long_options, &option_index);
 
 		if (c == -1) {
 			break;
