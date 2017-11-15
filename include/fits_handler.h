@@ -26,8 +26,12 @@
 
 typedef struct fits_handle {
 	fitsfile *src_fptr;
+	double *image;
+	int width;
+	int height;
 } fits_handle_t;
 
+fits_handle_t *fits_handler_mem_new(int *status);
 fits_handle_t *fits_handler_new(const char *filepath, int *status);
 
 time_t fits_get_observation_dt(fits_handle_t *handle);
