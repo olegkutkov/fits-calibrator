@@ -289,7 +289,7 @@ int fits_copy_header_custom(fitsfile *src, fitsfile *dst)
 	fits_read_key(src, TSTRING, "TELESCOP", card, NULL, &status);
 
 	if (status == 0) {
-		fits_write_key(dst, TSTRING, "TELESCOP", card, "Name of the object observed", &status);
+		fits_write_key(dst, TSTRING, "TELESCOP", card, "Telescope name", &status);
 	}
 
 	status = 0;
@@ -299,7 +299,7 @@ int fits_copy_header_custom(fitsfile *src, fitsfile *dst)
 	fits_read_key(src, TSTRING, "INSTRUME", card, NULL, &status);
 
 	if (status == 0) {
-		fits_write_key(dst, TSTRING, "INSTRUME", card, "Name of the object observed", &status);
+		fits_write_key(dst, TSTRING, "INSTRUME", card, "Instrument name", &status);
 	}
 
 	status = 0;
@@ -309,7 +309,7 @@ int fits_copy_header_custom(fitsfile *src, fitsfile *dst)
 	fits_read_key(src, TSTRING, "FILTER", card, NULL, &status);
 
 	if (status == 0) {
-		fits_write_key(dst, TSTRING, "FILTER", card, "name of the object observed", &status);
+		fits_write_key(dst, TSTRING, "FILTER", card, "Filter used during observation", &status);
 	}
 
 
@@ -320,7 +320,7 @@ int fits_copy_header_custom(fitsfile *src, fitsfile *dst)
 	fits_read_key(src, TSTRING, "EXPTIME", card, NULL, &status);
 
 	if (status == 0) {
-		fits_write_key(dst, TSTRING, "EXPTIME", card, "name of the object observed", &status);
+		fits_write_key(dst, TSTRING, "EXPTIME", card, "Exposure time", &status);
 	}
 
 
@@ -331,7 +331,7 @@ int fits_copy_header_custom(fitsfile *src, fitsfile *dst)
 	fits_read_key(src, TSTRING, "DATE-OBS", card, NULL, &status);
 
 	if (status == 0) {
-		fits_write_key(dst, TSTRING, "DATE-OBS", card, "Name of the object observed", &status);
+		fits_write_key(dst, TSTRING, "DATE-OBS", card, "Observation date", &status);
 	}
 
 
@@ -342,7 +342,7 @@ int fits_copy_header_custom(fitsfile *src, fitsfile *dst)
 	fits_read_key(src, TSTRING, "TIME-OBS", card, NULL, &status);
 
 	if (status == 0) {
-		fits_write_key(dst, TSTRING, "TIME-OBS", card, "Name of the object observed", &status);
+		fits_write_key(dst, TSTRING, "TIME-OBS", card, "Observation time", &status);
 	}
 
 
@@ -353,7 +353,7 @@ int fits_copy_header_custom(fitsfile *src, fitsfile *dst)
 	fits_read_key(src, TSTRING, "OBSERVER", card, NULL, &status);
 
 	if (status == 0) {
-		fits_write_key(dst, TSTRING, "OBSERVER", card, "Name of the object observed", &status);
+		fits_write_key(dst, TSTRING, "OBSERVER", card, "Observer name", &status);
 	}
 
 	snprintf(card, 25, "fits-calibrator %i.%i.%i"
