@@ -196,9 +196,26 @@ void calibrate_one_file(const char *file, void *arg)
 	double image_exptime;
 	fits_handle_t *fits_image;
 	char *save_path = NULL;
+	char *target_basename = NULL;
 	calibrator_params_t *params = (calibrator_params_t *) arg;
 
 	params->logger_msg("\nWorking %s\n", file);
+
+	target_basename = basename((char*)file);
+	build_full_file_path(params->outpath, target_basename, &save_path);
+
+	if (is_file_exist(save_path)) {
+		params->logger_msg("File %s is already exists, skipping calibration\n", save_path);
+		free(save_path);
+
+		total_files_counter--;
+
+		if (total_files_counter == 0) {
+			params->complete();
+		}
+
+		return;
+	}
 
 	fits_image = fits_handler_new(file, &status);
 
@@ -212,20 +229,12 @@ void calibrate_one_file(const char *file, void *arg)
 	fits_get_object_name(fits_image, object);
 	image_exptime = fits_get_object_exptime(fits_image);
 
-//	params->logger_msg("Object: %s\n", object);
-//	params->logger_msg("Exposure: %f\n", image_exptime);
-//	params->logger_msg("Image time: %i\n", image_time);
-
 	if (strlen(params->darkpath) > 0) {
 		fits_load_image(fits_image);
 
 		if ((count = substract_darks(params, fits_image, file, image_time, image_exptime)) > 0) {
 
-			char *fname = basename((char*)file);
-
 			snprintf(comment, 25, "Calibrated using %i darks", count);
-
-			build_full_file_path(params->outpath, fname, &save_path);
 
 			fits_save_as_new_file(fits_image, save_path, comment);
 
