@@ -20,6 +20,7 @@
 
 #include <string.h>
 #include <errno.h>
+#include "version.h"
 #include "fits_handler.h"
 
 fits_handle_t *fits_handler_mem_new(int *status)
@@ -333,8 +334,11 @@ int fits_copy_header_custom(fitsfile *src, fitsfile *dst)
 		fits_write_key(dst, TSTRING, "OBSERVER", card, "Name of the object observed", &status);
 	}
 
+	snprintf(card, 25, "fits-calibrator %i.%i.%i"
+			, AUTODARK_VERSION_MAJOR, AUTODARK_VERSION_MINOR, AUTODARK_VERSION_PATCH);
 
-	fits_write_comment(dst, "Calibrated by fits-calibrator",  &status);
+
+	fits_write_comment(dst, card,  &status);
 	fits_write_date(dst, &status);
 
 	return status;
