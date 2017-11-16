@@ -63,7 +63,7 @@ void free_darks_list(fits_handle_t **list, int cnt)
 	free(list);
 }
 
-fits_handle_t *build_master_calibration_file(calibrator_params_t *params, 
+fits_handle_t *build_master_calibration_file(calibrator_params_t *params, char *dpath,
 			int *count, const char *src_file,
 			time_t imtime, double exptime)
 {
@@ -77,7 +77,9 @@ fits_handle_t *build_master_calibration_file(calibrator_params_t *params,
 	fits_handle_t *curr_dark = NULL;
 	fits_handle_t *master_file = NULL;
 
-	dp = opendir(params->darkpath);
+	*count = 0;
+
+	dp = opendir(dpath);
 
 	if (dp == NULL) {
 		return NULL;
@@ -89,7 +91,7 @@ fits_handle_t *build_master_calibration_file(calibrator_params_t *params,
 		}
 
 		if (strstr(ep->d_name, "fit") || strstr(ep->d_name, "FIT")) {
-			build_full_file_path(params->darkpath, ep->d_name, &full_file_path);
+			build_full_file_path(dpath, ep->d_name, &full_file_path);
 
 			status = 0;
 
@@ -115,7 +117,11 @@ fits_handle_t *build_master_calibration_file(calibrator_params_t *params,
 				min_exp = min(exptime, dark_exposure);
 				max_exp = max(exptime, dark_exposure);
 
-				exp_diff = (min_exp / max_exp) * 100;
+				if (exptime > 0) {
+					exp_diff = (min_exp / max_exp) * 100;
+				} else {
+					exp_diff = 100;
+				}
 
 				if (exp_diff >= params->min_exp_eq_percent) {
 					params->logger_msg("\tFound corresponding calibration %s to file %s, timediff: %li sec, expdiff %.2f %%\n",
@@ -149,14 +155,16 @@ fits_handle_t *build_master_calibration_file(calibrator_params_t *params,
 
 	closedir (dp);
 
-	if (dark_counter < params->min_calfiles) {
-		if (master_file) {
-			free(master_file);
+	if (exptime > 0) {
+		if (dark_counter < params->min_calfiles) {
+			if (master_file) {
+				free(master_file);
+			}
+
+			params->logger_msg("!!! To few (%i) calibration files for the %s skipping calibration...\n", dark_counter, src_file);
+
+			return NULL;
 		}
-
-		params->logger_msg("!!! To few (%i) dark files for the %s skipping calibration...\n", dark_counter, src_file);
-
-		return NULL;
 	}
 
 	*count = dark_counter;
@@ -167,20 +175,36 @@ fits_handle_t *build_master_calibration_file(calibrator_params_t *params,
 int substract_darks(calibrator_params_t *params, fits_handle_t *orig_img, const char *src_file, time_t imtime, double exptime)
 {
 	int dark_counter = 0;
-
-	fits_handle_t *master_dark = build_master_calibration_file(params, &dark_counter, src_file, imtime, exptime);
+	int bias_counter = 0;
+	fits_handle_t *master_bias;
+	fits_handle_t *master_dark = build_master_calibration_file(params, params->darkpath, &dark_counter, src_file, imtime, exptime);
 
 	if (!master_dark) {
 		return -1;
 	}
 
+	master_bias = build_master_calibration_file(params, params->biaspath, &bias_counter, src_file, imtime, 0);
+
+	if (bias_counter > 0) {
+		fits_divide_image_matrix(master_bias, bias_counter);
+
+		fits_substract_image_matrix(master_dark, master_bias);
+		fits_substract_image_matrix(orig_img, master_bias);
+	}
+
 	fits_divide_image_matrix(master_dark, dark_counter);
+
 	fits_substract_image_matrix(orig_img, master_dark);
 
 	fits_free_image(master_dark);
+	fits_free_image(master_bias);
 
 	if (master_dark) {
 		free(master_dark);
+	}
+
+	if (master_bias) {
+		free(master_bias);
 	}
 
 	return dark_counter;
