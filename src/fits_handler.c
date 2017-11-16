@@ -268,6 +268,78 @@ int fits_substract_bias(fits_handle_t *image, fits_handle_t *bias)
 	return fits_substract_dark(image, bias);
 }
 
+int fits_copy_header_custom(fitsfile *src, fitsfile *dst)
+{
+	int status = 0;
+	char card[FLEN_CARD] = { 0 };
+
+	fits_read_key(src, TSTRING, "OBJECT", card, NULL, &status);
+
+	if (status == 0) {
+		fits_write_key(dst, TSTRING, "OBJECT", card, "Name of the object observed", &status);
+	}
+
+
+	status = 0;
+
+	memset(card, 0, sizeof(card));
+
+	fits_read_key(src, TSTRING, "DATE-OBS", card, NULL, &status);
+
+	if (status == 0) {
+		fits_write_key(dst, TSTRING, "DATE-OBS", card, "Name of the object observed", &status);
+	}
+
+
+	status = 0;
+
+	memset(card, 0, sizeof(card));
+
+	fits_read_key(src, TSTRING, "TIME-OBS", card, NULL, &status);
+
+	if (status == 0) {
+		fits_write_key(dst, TSTRING, "TIME-OBS", card, "Name of the object observed", &status);
+	}
+
+
+	status = 0;
+
+	memset(card, 0, sizeof(card));
+
+	fits_read_key(src, TSTRING, "filter", card, NULL, &status);
+
+	if (status == 0) {
+		fits_write_key(dst, TSTRING, "filter", card, "name of the object observed", &status);
+	}
+
+
+	status = 0;
+
+	memset(card, 0, sizeof(card));
+
+	fits_read_key(src, TSTRING, "TELESCOP", card, NULL, &status);
+
+	if (status == 0) {
+		fits_write_key(dst, TSTRING, "TELESCOP", card, "Name of the object observed", &status);
+	}
+
+	status = 0;
+
+	memset(card, 0, sizeof(card));
+
+	fits_read_key(src, TSTRING, "OBSERVER", card, NULL, &status);
+
+	if (status == 0) {
+		fits_write_key(dst, TSTRING, "OBSERVER", card, "Name of the object observed", &status);
+	}
+
+
+	fits_write_comment(dst, "Calibrated by fits-calibrator",  &status);
+	fits_write_date(dst, &status);
+
+	return status;
+}
+
 int fits_save_as_new_file(fits_handle_t *handle, const char *filepath)
 {
 	unsigned int naxis = 2;
@@ -277,6 +349,11 @@ int fits_save_as_new_file(fits_handle_t *handle, const char *filepath)
 	fits_create_file(&handle->new_fptr, filepath, &status);
 
 	fits_create_img(handle->new_fptr, 16, naxis, naxes, &status);
+
+	if (handle->src_fptr) {
+		fits_copy_header_custom(handle->src_fptr, handle->new_fptr);
+		//fits_copy_header(handle->src_fptr, handle->new_fptr, &status);
+	}
 
 	long fpx[2] = { 1L, 1L };
 
