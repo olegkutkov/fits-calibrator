@@ -51,7 +51,7 @@ fits_handle_t *fits_handler_new(const char *filepath, int *status)
 
 int fits_create_image_mem(fits_handle_t *handle, int width, int height)
 {
-	handle->image = (double*) malloc(width * height * sizeof(double));
+	handle->image = (long*) malloc(width * height * sizeof(long));
 
 	if (!handle->image) {
 		return -errno;
@@ -73,7 +73,7 @@ int fits_copy_image(fits_handle_t *handle, fits_handle_t *src)
 		return -ENOMEM;
 	}
 
-	memcpy(handle->image, src->image, src->width * src->height * sizeof(double));
+	memcpy(handle->image, src->image, src->width * src->height * sizeof(long));
 
 	return 0;
 }
@@ -120,6 +120,29 @@ int fits_divide_image_matrix(fits_handle_t *handle, int divider)
 	return 0;
 }
 
+int fits_substract_image_matrix(fits_handle_t *handle, fits_handle_t *sb)
+{
+	long i;
+
+	if (!handle || !sb || !sb->image) {
+		return -EFAULT;
+	}
+
+	if (!handle->image) {
+		return -ENOMEM;
+	}
+
+	if (handle->width != sb->width || handle->height != sb->height) {
+		return -EFAULT;
+	}
+
+	for (i = 0; i < handle->width * handle->height; ++i) {
+		handle->image[i] -= sb->image[i];
+	}
+
+	return 0;
+}
+
 int fits_get_image_size(fits_handle_t *handle)
 {
 	int status = 0;
@@ -153,13 +176,13 @@ int fits_load_image(fits_handle_t *handle)
 
 	npixels = handle->width * handle->height;
 
-	handle->image = (double*) malloc(npixels * sizeof(double));
+	handle->image = (long*) malloc(npixels * sizeof(long));
 
 	if (!handle->image) {
 		return -errno;
 	}
 
-	fits_read_pix(handle->src_fptr, TDOUBLE, firstpix,
+	fits_read_pix(handle->src_fptr, TLONG, firstpix,
 					npixels, NULL, handle->image, NULL, &status);
 
 	return status;
@@ -247,7 +270,21 @@ int fits_substract_bias(fits_handle_t *image, fits_handle_t *bias)
 
 int fits_save_as_new_file(fits_handle_t *handle, const char *filepath)
 {
-	return 0;
+	unsigned int naxis = 2;
+	long naxes[2] = { handle->width, handle->height };
+	int status = 0;
+
+	fits_create_file(&handle->new_fptr, filepath, &status);
+
+	fits_create_img(handle->new_fptr, 16, naxis, naxes, &status);
+
+	long fpx[2] = { 1L, 1L };
+
+	fits_write_pix(handle->new_fptr, TLONG, fpx, handle->width * handle->height, handle->image, &status);
+
+	fits_close_file(handle->new_fptr, &status);
+
+	return status;
 }
 
 void fits_release_file(fits_handle_t *handle)

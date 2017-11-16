@@ -26,7 +26,8 @@
 
 typedef struct fits_handle {
 	fitsfile *src_fptr;
-	double *image;
+	fitsfile *new_fptr;
+	long *image;
 	int width;
 	int height;
 } fits_handle_t;
@@ -43,6 +44,7 @@ int fits_load_image(fits_handle_t *handle);
 int fits_copy_image(fits_handle_t *handle, fits_handle_t *src);
 int fits_add_image_matrix(fits_handle_t *handle, fits_handle_t *src);
 int fits_divide_image_matrix(fits_handle_t *handle, int divider);
+int fits_substract_image_matrix(fits_handle_t *handle, fits_handle_t *sb);
 void fits_free_image(fits_handle_t *handle);
 
 int fits_get_image_w(fits_handle_t *handle);
