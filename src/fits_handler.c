@@ -317,10 +317,10 @@ int fits_copy_header_custom(fitsfile *src, fitsfile *dst)
 
 	memset(card, 0, sizeof(card));
 
-	fits_read_key(src, TSTRING, "EXPOSURE", card, NULL, &status);
+	fits_read_key(src, TSTRING, "EXPTIME", card, NULL, &status);
 
 	if (status == 0) {
-		fits_write_key(dst, TSTRING, "EXPOSURE", card, "name of the object observed", &status);
+		fits_write_key(dst, TSTRING, "EXPTIME", card, "name of the object observed", &status);
 	}
 
 
