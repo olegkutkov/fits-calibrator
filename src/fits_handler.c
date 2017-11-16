@@ -317,6 +317,17 @@ int fits_copy_header_custom(fitsfile *src, fitsfile *dst)
 
 	memset(card, 0, sizeof(card));
 
+	fits_read_key(src, TSTRING, "EXPOSURE", card, NULL, &status);
+
+	if (status == 0) {
+		fits_write_key(dst, TSTRING, "EXPOSURE", card, "name of the object observed", &status);
+	}
+
+
+	status = 0;
+
+	memset(card, 0, sizeof(card));
+
 	fits_read_key(src, TSTRING, "DATE-OBS", card, NULL, &status);
 
 	if (status == 0) {
