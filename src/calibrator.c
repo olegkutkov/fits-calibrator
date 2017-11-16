@@ -183,6 +183,8 @@ int substract_darks(calibrator_params_t *params, fits_handle_t *orig_img, const 
 		return -1;
 	}
 
+	fits_divide_image_matrix(master_dark, dark_counter);
+
 	master_bias = build_master_calibration_file(params, params->biaspath, &bias_counter, src_file, imtime, 0);
 
 	if (bias_counter > 0) {
@@ -191,8 +193,6 @@ int substract_darks(calibrator_params_t *params, fits_handle_t *orig_img, const 
 		fits_substract_image_matrix(master_dark, master_bias);
 		fits_substract_image_matrix(orig_img, master_bias);
 	}
-
-	fits_divide_image_matrix(master_dark, dark_counter);
 
 	fits_substract_image_matrix(orig_img, master_dark);
 
