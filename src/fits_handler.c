@@ -280,6 +280,36 @@ int fits_copy_header_custom(fitsfile *src, fitsfile *dst)
 		fits_write_key(dst, TSTRING, "OBJECT", card, "Name of the object observed", &status);
 	}
 
+	status = 0;
+
+	memset(card, 0, sizeof(card));
+
+	fits_read_key(src, TSTRING, "TELESCOP", card, NULL, &status);
+
+	if (status == 0) {
+		fits_write_key(dst, TSTRING, "TELESCOP", card, "Name of the object observed", &status);
+	}
+
+	status = 0;
+
+	memset(card, 0, sizeof(card));
+
+	fits_read_key(src, TSTRING, "INSTRUME", card, NULL, &status);
+
+	if (status == 0) {
+		fits_write_key(dst, TSTRING, "INSTRUME", card, "Name of the object observed", &status);
+	}
+
+	status = 0;
+
+	memset(card, 0, sizeof(card));
+
+	fits_read_key(src, TSTRING, "FILTER", card, NULL, &status);
+
+	if (status == 0) {
+		fits_write_key(dst, TSTRING, "FILTER", card, "name of the object observed", &status);
+	}
+
 
 	status = 0;
 
@@ -302,27 +332,6 @@ int fits_copy_header_custom(fitsfile *src, fitsfile *dst)
 		fits_write_key(dst, TSTRING, "TIME-OBS", card, "Name of the object observed", &status);
 	}
 
-
-	status = 0;
-
-	memset(card, 0, sizeof(card));
-
-	fits_read_key(src, TSTRING, "filter", card, NULL, &status);
-
-	if (status == 0) {
-		fits_write_key(dst, TSTRING, "filter", card, "name of the object observed", &status);
-	}
-
-
-	status = 0;
-
-	memset(card, 0, sizeof(card));
-
-	fits_read_key(src, TSTRING, "TELESCOP", card, NULL, &status);
-
-	if (status == 0) {
-		fits_write_key(dst, TSTRING, "TELESCOP", card, "Name of the object observed", &status);
-	}
 
 	status = 0;
 
