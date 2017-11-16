@@ -63,27 +63,24 @@ void free_darks_list(fits_handle_t **list, int cnt)
 	free(list);
 }
 
-void build_master_dark(fits_handle_t **list, int cnt)
+fits_handle_t *build_master_calibration_file(calibrator_params_t *params, 
+			int *count, const char *src_file,
+			time_t imtime, double exptime)
 {
-	
-}
-
-int substract_darks(calibrator_params_t *params, fits_handle_t *orig_img, const char *src_file, time_t imtime, double exptime)
-{
-	char err_buf[32] = { 0 };
-	int status = 0, dark_counter = 0;
 	DIR *dp;
 	struct dirent *ep;
 	char *full_file_path = NULL;
+	char err_buf[32] = { 0 };
+	int status = 0, dark_counter = 0;
 	double dark_exposure, exp_diff, min_exp, max_exp;
 	time_t dark_date, timediff_sec, min_time, max_time;
 	fits_handle_t *curr_dark = NULL;
-	fits_handle_t *master_dark = NULL;
+	fits_handle_t *master_file = NULL;
 
 	dp = opendir(params->darkpath);
 
 	if (dp == NULL) {
-		return -1;
+		return NULL;
 	}
 
 	while ((ep = readdir(dp))) {
@@ -121,7 +118,7 @@ int substract_darks(calibrator_params_t *params, fits_handle_t *orig_img, const 
 				exp_diff = (min_exp / max_exp) * 100;
 
 				if (exp_diff >= params->min_exp_eq_percent) {
-					params->logger_msg("\tFound corresponding dark %s to file %s, timediff: %li sec, expdiff %.2f %%\n",
+					params->logger_msg("\tFound corresponding calibration %s to file %s, timediff: %li sec, expdiff %.2f %%\n",
 											full_file_path, src_file, timediff_sec, exp_diff);
 
 					fits_load_image(curr_dark);
@@ -129,13 +126,13 @@ int substract_darks(calibrator_params_t *params, fits_handle_t *orig_img, const 
 					if (dark_counter == 0) {
 						status = 0;
 
-						master_dark = fits_handler_mem_new(&status);
+						master_file = fits_handler_mem_new(&status);
 
-						fits_create_image_mem(master_dark, fits_get_image_w(curr_dark), fits_get_image_h(curr_dark));
+						fits_create_image_mem(master_file, fits_get_image_w(curr_dark), fits_get_image_h(curr_dark));
 
-						fits_copy_image(master_dark, curr_dark);
+						fits_copy_image(master_file, curr_dark);
 					} else {
-						fits_add_image_matrix(master_dark, curr_dark);
+						fits_add_image_matrix(master_file, curr_dark);
 					}
 
 					fits_free_image(curr_dark);
@@ -153,37 +150,48 @@ int substract_darks(calibrator_params_t *params, fits_handle_t *orig_img, const 
 	closedir (dp);
 
 	if (dark_counter < params->min_calfiles) {
-		if (master_dark) {
-			free(master_dark);
+		if (master_file) {
+			free(master_file);
 		}
 
 		params->logger_msg("!!! To few (%i) dark files for the %s skipping calibration...\n", dark_counter, src_file);
 
+		return NULL;
+	}
+
+	*count = dark_counter;
+
+	return master_file;
+}
+
+int substract_darks(calibrator_params_t *params, fits_handle_t *orig_img, const char *src_file, time_t imtime, double exptime)
+{
+	int dark_counter = 0;
+
+	fits_handle_t *master_dark = build_master_calibration_file(params, &dark_counter, src_file, imtime, exptime);
+
+	if (!master_dark) {
 		return -1;
 	}
 
 	fits_divide_image_matrix(master_dark, dark_counter);
-
-//	fits_save_as_new_file(master_dark, "/tmp/test.fits");
-
 	fits_substract_image_matrix(orig_img, master_dark);
 
 	fits_free_image(master_dark);
-
-//	fits_release_file(master_dark);
 
 	if (master_dark) {
 		free(master_dark);
 	}
 
-	return 0;
+	return dark_counter;
 }
 
 void calibrate_one_file(const char *file, void *arg)
 {
 	char err_buf[32] = { 0 };
-	char object[76];
-	int status = 0;
+	char object[76] = { 0 };
+	char comment[35] = { 0 };
+	int status = 0, count = 0;
 	time_t image_time;
 	double image_exptime;
 	fits_handle_t *fits_image;
@@ -211,12 +219,16 @@ void calibrate_one_file(const char *file, void *arg)
 	if (strlen(params->darkpath) > 0) {
 		fits_load_image(fits_image);
 
-		if (substract_darks(params, fits_image, file, image_time, image_exptime) == 0) {
+		if ((count = substract_darks(params, fits_image, file, image_time, image_exptime)) > 0) {
 
 			char *fname = basename((char*)file);
 
+			snprintf(comment, 25, "Calibrated using %i darks", count);
+
 			build_full_file_path(params->outpath, fname, &save_path);
-			fits_save_as_new_file(fits_image, save_path);
+
+			fits_save_as_new_file(fits_image, save_path, comment);
+
 			free(save_path);
 
 		}
