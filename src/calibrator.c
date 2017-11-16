@@ -23,6 +23,7 @@
 #include <dirent.h>
 #include <string.h>
 #include <unistd.h>
+#include <libgen.h>
 #include <time.h>
 #include "list.h"
 #include "thread_pool.h"
@@ -67,7 +68,7 @@ void build_master_dark(fits_handle_t **list, int cnt)
 	
 }
 
-int substract_darks(calibrator_params_t *params, const char *src_file, time_t imtime, double exptime)
+int substract_darks(calibrator_params_t *params, fits_handle_t *orig_img, const char *src_file, time_t imtime, double exptime)
 {
 	char err_buf[32] = { 0 };
 	int status = 0, dark_counter = 0;
@@ -163,7 +164,13 @@ int substract_darks(calibrator_params_t *params, const char *src_file, time_t im
 
 	fits_divide_image_matrix(master_dark, dark_counter);
 
+//	fits_save_as_new_file(master_dark, "/tmp/test.fits");
+
+	fits_substract_image_matrix(orig_img, master_dark);
+
 	fits_free_image(master_dark);
+
+//	fits_release_file(master_dark);
 
 	if (master_dark) {
 		free(master_dark);
@@ -180,6 +187,7 @@ void calibrate_one_file(const char *file, void *arg)
 	time_t image_time;
 	double image_exptime;
 	fits_handle_t *fits_image;
+	char *save_path = NULL;
 	calibrator_params_t *params = (calibrator_params_t *) arg;
 
 	params->logger_msg("\nWorking %s\n", file);
@@ -201,7 +209,19 @@ void calibrate_one_file(const char *file, void *arg)
 //	params->logger_msg("Image time: %i\n", image_time);
 
 	if (strlen(params->darkpath) > 0) {
-		substract_darks(params, file, image_time, image_exptime);
+		fits_load_image(fits_image);
+
+		if (substract_darks(params, fits_image, file, image_time, image_exptime) == 0) {
+
+			char *fname = basename((char*)file);
+
+			build_full_file_path(params->outpath, fname, &save_path);
+			fits_save_as_new_file(fits_image, save_path);
+			free(save_path);
+
+		}
+
+		fits_free_image(fits_image);
 	}
 
 	fits_handler_free(fits_image);
