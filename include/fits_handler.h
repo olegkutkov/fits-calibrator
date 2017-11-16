@@ -53,7 +53,7 @@ int fits_get_image_h(fits_handle_t *handle);
 int fits_substract_dark(fits_handle_t *image, fits_handle_t *dark);
 int fits_substract_bias(fits_handle_t *image, fits_handle_t *bias);
 
-int fits_save_as_new_file(fits_handle_t *image, const char *filepath);
+int fits_save_as_new_file(fits_handle_t *image, const char *filepath, const char *comment);
 
 void fits_release_file(fits_handle_t *handle);
 void fits_handler_free(fits_handle_t *handle);

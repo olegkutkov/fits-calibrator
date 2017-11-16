@@ -353,7 +353,7 @@ int fits_copy_header_custom(fitsfile *src, fitsfile *dst)
 	return status;
 }
 
-int fits_save_as_new_file(fits_handle_t *handle, const char *filepath)
+int fits_save_as_new_file(fits_handle_t *handle, const char *filepath, const char *comment)
 {
 	unsigned int naxis = 2;
 	long naxes[2] = { handle->width, handle->height };
@@ -365,7 +365,7 @@ int fits_save_as_new_file(fits_handle_t *handle, const char *filepath)
 
 	if (handle->src_fptr) {
 		fits_copy_header_custom(handle->src_fptr, handle->new_fptr);
-		//fits_copy_header(handle->src_fptr, handle->new_fptr, &status);
+		fits_write_comment(handle->new_fptr, comment,  &status);
 	}
 
 	long fpx[2] = { 1L, 1L };
