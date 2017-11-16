@@ -30,6 +30,7 @@ typedef struct fits_handle {
 	long *image;
 	int width;
 	int height;
+	int bitpix;
 } fits_handle_t;
 
 fits_handle_t *fits_handler_mem_new(int *status);

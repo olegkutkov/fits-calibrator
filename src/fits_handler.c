@@ -154,6 +154,8 @@ int fits_get_image_size(fits_handle_t *handle)
 	handle->width = anaxes[0];
 	handle->height = anaxes[1];
 
+	fits_get_img_type(handle->src_fptr, &handle->bitpix, &status);
+
 	return status;
 }
 
@@ -361,7 +363,7 @@ int fits_save_as_new_file(fits_handle_t *handle, const char *filepath, const cha
 
 	fits_create_file(&handle->new_fptr, filepath, &status);
 
-	fits_create_img(handle->new_fptr, 16, naxis, naxes, &status);
+	fits_create_img(handle->new_fptr, handle->bitpix, naxis, naxes, &status);
 
 	if (handle->src_fptr) {
 		fits_copy_header_custom(handle->src_fptr, handle->new_fptr);
