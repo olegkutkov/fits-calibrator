@@ -57,8 +57,9 @@ void show_help()
 	printf("\t-i, --input\t\tSet directory with non-calibrated FITS files\n");
 	printf("\t-o, --output\t\tSet directory for resulting calibrated FITS files\n");
 	printf("\t-d, --dark\t\tSet directory with darks files\n");
+	printf("\t-b, --bias\t\tSet directory with bias files\n");
 	printf("\t-t, --time-diff\t\tSet max time diff between image and calibration file is seconds (default is 86400)\n");
-	printf("\t-e, --exp-diff\t\tSet min exposure equality between image and calibration file in percenst (default is 35)\n");
+	printf("\t-e, --exp-diff\t\tSet min exposure equality between image and calibration file in percenst (default is 65)\n");
 	printf("\t-n, --min-calfiles\tSet minumum requred num of calibration files to process image (default is 2)\n");
 	printf("\t-m, --max-calfiles\tSet maximum requred num of calibration files to process image (default is 17)\n");
 	printf("\t-j, --jobs\t\tSet threads count per CPU\n");
