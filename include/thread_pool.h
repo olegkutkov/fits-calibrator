@@ -1,7 +1,7 @@
 /* 
    thread_pool.h
 
-   Copyright 2017  Oleg Kutkov <elenbert@gmail.com>
+   Copyright 2022  Oleg Kutkov <conctact@olegkutkov.me>
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by

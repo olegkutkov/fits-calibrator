@@ -1,7 +1,7 @@
 #
 # Makefile
 #
-#   Copyright 2017  Oleg Kutkov <elenbert@gmail.com>
+#   Copyright 2022  Oleg Kutkov <contact@olegkutkov.me>
 #
 #   This program is free software: you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -28,9 +28,17 @@ LDFLAG := -lcfitsio -pthread
 SRC := src/main.c src/file_utils.c src/calibrator.c src/list.c \
 		src/thread_pool.c src/fits_handler.c
 
+.PHONY: all
+all: $(PROGRAM)
+
 $(PROGRAM): $(OBJECTS)
 	$(CC) $(CFLAGS) $(SRC) $(LDFLAG) -o $(PROGRAM)
 
+.PHONY: install
+install:
+	cp $(PROGRAM) /usr/bin
+
+.PHONY: clean
 clean:
 	rm -fr $(PROGRAM) $(PROGRAM).o
 

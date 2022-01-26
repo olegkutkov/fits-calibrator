@@ -2,7 +2,7 @@
    main.c
     - entry point of the application
 
-   Copyright 2017  Oleg Kutkov <elenbert@gmail.com>
+   Copyright 2022  Oleg Kutkov <contact@olegkutkov.me>
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -51,7 +51,7 @@ void show_help()
 {
 	printf("fits-calibrator, version: %i.%i.%i\n"
 			, AUTODARK_VERSION_MAJOR, AUTODARK_VERSION_MINOR, AUTODARK_VERSION_PATCH);
-	printf("Oleg Kutkov <elenbert@gmail.com>\nCrimean astrophysical observatory, 2017\n\n");
+	printf("Oleg Kutkov <contact@olegkutkov.me>\n\n");
 
 	printf("\t-h, --help\t\tShow this help and exit\n");
 	printf("\t-i, --input\t\tSet directory with non-calibrated FITS files\n");
