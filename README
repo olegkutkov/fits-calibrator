@@ -1,4 +1,29 @@
-# fits-calibrator
+FITS calibrator
 
-Apply calibration files to FITS in a batch mode
+***
 
+Build and install:
+
+  sudo apt-get install build-essential git libcfitsio-dev
+
+  git clone https://github.com/olegkutkov/fits-calibrator.git
+
+  cd fits-calibrator
+  make
+  sudo make install
+
+***
+
+Run:
+
+  fits-calibrator -i <input directory> -o <output directory> -d <dark directory> -b <bias directory>
+
+***
+
+Additional params:
+
+  	-t, --time-diff		Set max time diff between image and calibration file is seconds (default is 86400)
+	-e, --exp-diff		Set min exposure equality between image and calibration file in percenst (default is 65)
+	-n, --min-calfiles	Set minumum requred num of calibration files to process image (default is 2)
+	-m, --max-calfiles	Set maximum requred num of calibration files to process image (default is 17)
+	-j, --jobs		Set threads count per CPU
