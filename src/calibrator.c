@@ -258,7 +258,7 @@ void calibrate_one_file(const char *file, void *arg)
 
 		if ((count = substract_darks(params, fits_image, file, image_time, image_exptime)) > 0) {
 
-			snprintf(comment, 25, "Calibrated using %i darks", count);
+			snprintf(comment, sizeof(comment), "Calibrated using %i darks", count);
 
 			fits_save_as_new_file(fits_image, save_path, comment);
 
