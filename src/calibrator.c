@@ -124,7 +124,7 @@ fits_handle_t *build_master_calibration_file(calibrator_params_t *params, char *
 				}
 
 				if (exp_diff >= params->min_exp_eq_percent) {
-					params->logger_msg("\tFound corresponding calibration %s to file %s, timediff: %li sec, expdiff %.2f %%\n",
+					params->logger_msg("\tInfo: Found corresponding calibration %s to file %s, timediff: %li sec, expdiff %.2f %%\n",
 											full_file_path, src_file, timediff_sec, exp_diff);
 
 					fits_load_image(curr_dark);
@@ -144,7 +144,11 @@ fits_handle_t *build_master_calibration_file(calibrator_params_t *params, char *
 					fits_free_image(curr_dark);
 
 					dark_counter++;
+				} else {
+					params->logger_msg("\tWarning: Couldn't apply %s calibration to %s, exposure time is out limit\n", full_file_path, src_file);
 				}
+			} else {
+				params->logger_msg("\tWarning: Couldn't apply %s calibration to %s, timestamps diff is out limit, Δt = %d sec\n", full_file_path, src_file, timediff_sec);
 			}
 
 			fits_handler_free(curr_dark);
@@ -161,7 +165,7 @@ fits_handle_t *build_master_calibration_file(calibrator_params_t *params, char *
 				free(master_file);
 			}
 
-			params->logger_msg("!!! To few (%i) calibration files for the %s skipping calibration...\n", dark_counter, src_file);
+			params->logger_msg("\tWarning: To few (%i) calibration files for the %s skipping calibration...\n", dark_counter, src_file);
 
 			return NULL;
 		}
@@ -172,23 +176,21 @@ fits_handle_t *build_master_calibration_file(calibrator_params_t *params, char *
 	return master_file;
 }
 
-int substract_darks(calibrator_params_t *params, fits_handle_t *orig_img, const char *src_file, time_t imtime, double exptime)
+int substract_darks(calibrator_params_t *params, fits_handle_t *orig_img, const char *src_file, time_t imtime, double exptime, int *dark_counter, int *bias_counter)
 {
-	int dark_counter = 0;
-	int bias_counter = 0;
 	fits_handle_t *master_bias;
-	fits_handle_t *master_dark = build_master_calibration_file(params, params->darkpath, &dark_counter, src_file, imtime, exptime);
+	fits_handle_t *master_dark = build_master_calibration_file(params, params->darkpath, dark_counter, src_file, imtime, exptime);
 
 	if (!master_dark) {
 		return -1;
 	}
 
-	fits_divide_image_matrix(master_dark, dark_counter);
+	fits_divide_image_matrix(master_dark, *dark_counter);
 
-	master_bias = build_master_calibration_file(params, params->biaspath, &bias_counter, src_file, imtime, 0);
+	master_bias = build_master_calibration_file(params, params->biaspath, bias_counter, src_file, imtime, 0);
 
-	if (bias_counter > 0) {
-		fits_divide_image_matrix(master_bias, bias_counter);
+	if (*bias_counter > 0) {
+		fits_divide_image_matrix(master_bias, *bias_counter);
 
 		fits_substract_image_matrix(master_dark, master_bias);
 		fits_substract_image_matrix(orig_img, master_bias);
@@ -207,7 +209,7 @@ int substract_darks(calibrator_params_t *params, fits_handle_t *orig_img, const 
 		free(master_bias);
 	}
 
-	return dark_counter;
+	return 0;
 }
 
 void calibrate_one_file(const char *file, void *arg)
@@ -215,7 +217,7 @@ void calibrate_one_file(const char *file, void *arg)
 	char err_buf[32] = { 0 };
 	char object[76] = { 0 };
 	char comment[35] = { 0 };
-	int status = 0, count = 0;
+	int status = 0, dark_count = 0, bias_count = 0;
 	time_t image_time;
 	double image_exptime;
 	fits_handle_t *fits_image;
@@ -256,14 +258,18 @@ void calibrate_one_file(const char *file, void *arg)
 	if (strlen(params->darkpath) > 0) {
 		fits_load_image(fits_image);
 
-		if ((count = substract_darks(params, fits_image, file, image_time, image_exptime)) > 0) {
+		if ((substract_darks(params, fits_image, file, image_time, image_exptime, &dark_count, &bias_count)) != -1) {
 
-			snprintf(comment, sizeof(comment), "Calibrated using %i darks", count);
+			snprintf(comment, sizeof(comment), "Calibrated: %i darks, %i bias", dark_count, bias_count);
+
+			params->logger_msg("Info: %s is %s\n", file, comment);
 
 			fits_save_as_new_file(fits_image, save_path, comment);
 
 			free(save_path);
 
+		} else {
+			params->logger_msg("Warning: %s WASN'T calibrated\n", file);
 		}
 
 		fits_free_image(fits_image);
